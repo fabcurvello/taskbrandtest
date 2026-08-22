@@ -1,23 +1,21 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, effect, input, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Task } from './task.model';
 
 @Component({
   selector: 'task-form',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   template: `
     <section class="task-form">
-      <h2>{{ task ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
+      <h2>{{ task() ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <label>
           Título
           <input formControlName="title" placeholder="Digite o título" />
         </label>
-        <p class="error" *ngIf="titleControl.invalid && titleControl.touched">
-          O título é obrigatório e deve ter pelo menos 3 caracteres.
-        </p>
+        @if (titleControl.invalid && titleControl.touched) {
+          <p class="error">O título é obrigatório e deve ter pelo menos 3 caracteres.</p>
+        }
 
         <label>
           Descrição
@@ -25,7 +23,7 @@ import { Task } from './task.model';
         </label>
 
         <button type="submit" [disabled]="form.invalid">
-          {{ task ? 'Atualizar tarefa' : 'Adicionar tarefa' }}
+          {{ task() ? 'Atualizar tarefa' : 'Adicionar tarefa' }}
         </button>
       </form>
     </section>
@@ -100,11 +98,11 @@ import { Task } from './task.model';
     `
   ]
 })
-export class TaskFormComponent implements OnChanges {
-  @Input() task: Task | null = null;
-  @Output() saved = new EventEmitter<Task>();
+export class TaskFormComponent {
+  readonly task = input<Task | null>(null);
+  readonly saved = output<Task>();
 
-  form = new FormGroup({
+  readonly form = new FormGroup({
     title: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(3)]
@@ -118,10 +116,13 @@ export class TaskFormComponent implements OnChanges {
     return this.form.controls.title;
   }
 
-  ngOnChanges(): void {
-    this.form.setValue({
-      title: this.task?.title ?? '',
-      description: this.task?.description ?? ''
+  constructor() {
+    effect(() => {
+      const task = this.task();
+      this.form.setValue({
+        title: task?.title ?? '',
+        description: task?.description ?? ''
+      });
     });
   }
 
@@ -133,10 +134,10 @@ export class TaskFormComponent implements OnChanges {
 
     const value = this.form.getRawValue();
     this.saved.emit({
-      id: this.task?.id ?? '',
+      id: this.task()?.id ?? '',
       title: value.title.trim(),
       description: value.description.trim(),
-      completed: this.task?.completed ?? false
+      completed: this.task()?.completed ?? false
     });
     this.form.reset({ title: '', description: '' });
   }

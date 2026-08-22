@@ -1,6 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TaskFormComponent } from './task-form.component';
 import { TaskListComponent } from './task-list.component';
 import { TaskService } from './task.service';
@@ -8,8 +7,7 @@ import { Task } from './task.model';
 
 @Component({
   selector: 'tasks-page',
-  standalone: true,
-  imports: [CommonModule, RouterModule, TaskFormComponent, TaskListComponent],
+  imports: [RouterLink, TaskFormComponent, TaskListComponent],
   template: `
     <section class="tasks-page">
       <header class="tasks-header">
@@ -28,7 +26,7 @@ import { Task } from './task.model';
       </header>
 
       <div class="tasks-grid">
-        <task-form [task]="selectedTask" (saved)="saveTask($event)"></task-form>
+        <task-form [task]="selectedTask()" (saved)="saveTask($event)"></task-form>
         <task-list
           [tasks]="tasks()"
           (edit)="selectTask($event)"
@@ -111,20 +109,14 @@ import { Task } from './task.model';
   ]
 })
 export class TasksComponent {
-  selectedTask: Task | null = null;
+  private readonly taskService = inject(TaskService);
 
-  constructor(private readonly taskService: TaskService) {}
-
-  get tasks() {
-    return this.taskService.tasks;
-  }
-
-  get remaining() {
-    return this.taskService.remaining;
-  }
+  readonly tasks = this.taskService.tasks;
+  readonly remaining = this.taskService.remaining;
+  readonly selectedTask = signal<Task | null>(null);
 
   selectTask(task: Task): void {
-    this.selectedTask = task;
+    this.selectedTask.set(task);
   }
 
   saveTask(task: Task): void {
@@ -133,13 +125,13 @@ export class TasksComponent {
     } else {
       this.taskService.addTask(task);
     }
-    this.selectedTask = null;
+    this.selectedTask.set(null);
   }
 
   removeTask(id: string): void {
     this.taskService.removeTask(id);
-    if (this.selectedTask?.id === id) {
-      this.selectedTask = null;
+    if (this.selectedTask()?.id === id) {
+      this.selectedTask.set(null);
     }
   }
 

@@ -1,23 +1,20 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output } from '@angular/core';
 import { Task } from './task.model';
 
 @Component({
   selector: 'task-item',
-  standalone: true,
-  imports: [CommonModule],
   template: `
-    <article class="task-item" [class.completed]="task.completed">
-      <button type="button" class="checkbox" (click)="toggle.emit(task.id)">
-        <span>{{ task.completed ? '✓' : '' }}</span>
+    <article class="task-item" [class.completed]="task().completed">
+      <button type="button" class="checkbox" (click)="toggle.emit(task().id)">
+        <span>{{ task().completed ? '✓' : '' }}</span>
       </button>
       <div class="content">
-        <strong>{{ task.title }}</strong>
-        <p>{{ task.description }}</p>
+        <strong>{{ task().title }}</strong>
+        <p>{{ task().description }}</p>
       </div>
       <div class="actions">
-        <button type="button" (click)="edit.emit(task)">Editar</button>
-        <button type="button" class="danger" (click)="remove.emit(task.id)">Remover</button>
+        <button type="button" (click)="edit.emit(task())">Editar</button>
+        <button type="button" class="danger" (click)="remove.emit(task().id)">Remover</button>
       </div>
     </article>
   `,
@@ -86,8 +83,8 @@ import { Task } from './task.model';
   ]
 })
 export class TaskItemComponent {
-  @Input() task!: Task;
-  @Output() edit = new EventEmitter<Task>();
-  @Output() remove = new EventEmitter<string>();
-  @Output() toggle = new EventEmitter<string>();
+  readonly task = input.required<Task>();
+  readonly edit = output<Task>();
+  readonly remove = output<string>();
+  readonly toggle = output<string>();
 }
